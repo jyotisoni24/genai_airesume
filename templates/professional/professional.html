@@ -1,52 +1,150 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <style>
-    body {
-      font-family: 'Times New Roman', serif;
-      margin: 60px;
-      color: #000;
-    }
-    h1 {
-      font-size: 36px;
-      margin-bottom: 5px;
-    }
-    p {
-      font-size: 14px;
-    }
-    h2 {
-      font-size: 18px;
-      margin-top: 30px;
-      text-transform: uppercase;
-      border-bottom: 1px solid #000;
-    }
-    ul {
-      margin-top: 10px;
-      padding-left: 20px;
-    }
-    li {
-      margin-bottom: 6px;
-    }
-  </style>
+<style>
+
+body {
+    font-family: "Times New Roman", serif;
+    margin: 20px 60px;
+    color: #000;
+    line-height: 1.1;
+    font-size: 13px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #000;
+    padding-bottom: 4px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.right-header {
+    text-align: right;
+    font-size: 13px;
+    font-weight: normal;
+}
+
+.section-title {
+    font-size: 14px;
+    font-weight: bold;
+    border-bottom: 1px solid #000;
+    margin-top: 8px;
+    margin-bottom: 2px;
+    text-transform: uppercase;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+td {
+    padding: 1px 0;
+}
+
+.date-col {
+    text-align: right;
+    width: 25%;
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+ul {
+    margin: 2px 0 2px 18px;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 1px;
+}
+
+.small {
+    font-size: 12px;
+}
+
+</style>
 </head>
 <body>
-  <h1>{{ name }}</h1>
-  <p><strong>Email:</strong> {{ email }}</p>
 
-  <h2>Skills</h2>
-  <ul>
-    {% for skill in skills.split(',') %}
-    <li>{{ skill.strip() }}</li>
-    {% endfor %}
-  </ul>
+<div class="header">
+    <div>{{ name }}</div>
+    <div class="right-header">
+        {{ contact }}<br>
+        {{ email }}<br>
+        {{ website }}<br>
+        {{ linkedin }}<br>
+        {{ github }}
+    </div>
+</div>
 
-  <h2>Projects</h2>
-  <ul>
-    {% for project in projects %}
-    <li><strong>{{ project.name }}</strong>: {{ project.description }}</li>
-    {% endfor %}
-  </ul>
+{% if education %}
+<div class="section-title">Education</div>
+<table>
+{% for edu in education %}
+<tr>
+    <td><b>{{ edu.degree }}</b>, {{ edu.institute }}</td>
+    <td class="date-col">{{ edu.year }}</td>
+</tr>
+{% if edu.cgpa %}
+<tr>
+    <td class="small">CGPA / Percentage: {{ edu.cgpa }}</td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>
+{% endif %}
+
+{% if projects %}
+<div class="section-title">Projects</div>
+<table>
+{% for proj in projects %}
+<tr>
+    <td><b>{{ proj.name }}</b></td>
+    <td class="date-col">{{ proj.year }}</td>
+</tr>
+<tr>
+<td colspan="2">
+<ul>
+{% for p in proj.points %}
+<li>{{ p }}</li>
+{% endfor %}
+</ul>
+</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if skills %}
+<div class="section-title">Skills</div>
+<ul>
+{% for skill in skills.split(',') %}
+<li>{{ skill.strip() }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if achievements %}
+<div class="section-title">Achievements</div>
+<ul>
+{% for a in achievements %}
+<li>{{ a }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if certifications %}
+<div class="section-title">Certifications</div>
+<ul>
+{% for c in certifications %}
+<li>{{ c }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
 </body>
 </html>
-
-

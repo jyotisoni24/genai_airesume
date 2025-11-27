@@ -1,113 +1,69 @@
-/* General body and font */
 body {
-  margin: 0;
-  padding: 1cm;
-  font-family: "Times New Roman", Times, serif;
-  color: #000;
-  line-height: 1.3;
-  font-size: 10pt;
+    font-family: "Times New Roman", serif;
+    background: #f2f2f2;
+    margin: 0;
+    padding: 0;
 }
 
-/* Header container - center aligned, font size 11pt */
-.header {
-  display: flex;
-  justify-content: center;   /* center horizontally */
-  align-items: center;
-  margin-bottom: 0.3cm;
-  font-size: 11pt;           /* font size for header text */
-  text-align: center;        /* center text inside children */
-  gap: 1cm;                  /* spacing between name and contact */
+.container {
+    width: 70%;
+    background: white;
+    margin: 30px auto;
+    padding: 40px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
 }
 
-/* Remove default alignment */
-.header-left, .header-right {
-  /* no float or text-align needed here */
+.name {
+    text-align: center;
+    font-size: 32px;
+    letter-spacing: 1px;
+    margin: 0;
 }
 
-/* Name styling */
-.header-left h1 {
-  font-weight: bold;
-  margin: 0;
-  font-size: 11pt;
+.contact {
+    text-align: center;
+    font-size: 14px;
+    margin: 10px 0 15px;
 }
 
-/* Email + contact styling */
-.header-right {
-  white-space: normal;
-  font-size: 11pt;
+.contact span {
+    margin: 0 8px;
 }
 
-/* Section divider */
-.section-divider {
-  border: none;
-  border-top: 1px solid #333;
-  margin: 0.2cm 0;
+h2 {
+    font-size: 18px;
+    border-bottom: 1px solid black;
+    padding-bottom: 3px;
+    margin-top: 18px;
 }
 
-/* Section Titles - italic, font size 11pt */
-.section h2 {
-  margin: 0 0 0.2cm 0;
-  font-weight: normal;  /* remove bold */
-  font-style: italic;
-  font-size: 11pt;
+.row {
+    display: flex;
+    justify-content: space-between;
 }
 
-/* Lists: remove bullets and inline */
+.right {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.skills-grid {
+    display: flex;
+    gap: 40px;
+}
+
 ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+    margin: 5px 0 5px 20px;
 }
 
-/* Inline list items with commas */
-ul.inline-list {
-  display: inline;
-}
-
-ul.inline-list li {
-  display: inline;
-}
-
-ul.inline-list li::after {
-  content: ", ";
-}
-
-/* Remove comma after last item */
-ul.inline-list li:last-child::after {
-  content: "";
-}
-
-/* Education: degree & institution italic */
-.section.education .entry strong {
-  font-style: italic;
-}
-
-/* Projects: project name italic */
-.section.projects .entry strong {
-  font-style: italic;
-}
-
-/* Project entries */
-.entry {
-  margin-bottom: 0.4em;
-}
-
-/* Links styling */
-a {
-  color: #000;
-  text-decoration: underline;
-}
-
-/* Print media adjustments to keep single page */
 @media print {
-  body {
-    padding: 1cm;
-    font-size: 10pt;
-  }
-  .header-left h1 {
-    font-size: 10pt;
-  }
-  .section h2 {
-    font-size: 11pt;
-  }
+    body {
+        background: white;
+    }
+    .container {
+        box-shadow: none;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
 }

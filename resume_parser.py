@@ -1,99 +1,108 @@
 import fitz  # PyMuPDF
 import re
 
-def extract_text_from_pdf(uploaded_file):
+def extract_text_from_pdf(uploaded_file) -> str:
+    """
+    Read the uploaded PDF (Streamlit file_uploader object) and return full text.
+    """
+    file_bytes = uploaded_file.read()
     text = ""
-    with fitz.open(stream=uploaded_file.read(), filetype="pdf") as doc:
+    with fitz.open(stream=file_bytes, filetype="pdf") as doc:
         for page in doc:
-            text += page.get_text()
+            text += page.get_text() # type: ignore
     return text
 
-def extract_basic_info(text):
-    lines = text.split('\n')
 
-    # Name: take first non-empty line (usually top of resume)
-    name = ""
+def _find_name(lines):
+    """
+    Name detection heuristic
+    """
     for line in lines:
-        if line.strip():
-            name = line.strip()
-            break
+        clean = line.strip()
+        if not clean:
+            continue
+        lower = clean.lower()
+        if "resume" in lower or "curriculum vitae" in lower or lower == "cv":
+            continue
+        if 2 <= len(clean.split()) <= 5:
+            return clean
+        return clean
+    return ""
 
-    # Email
-    email_match = re.search(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", text)
+
+def extract_basic_info(text: str) -> dict:
+    text = text.replace("\r", "\n")
+    lines = [l.strip() for l in text.split("\n")]
+
+    # ---- Name ----
+    name = _find_name(lines)
+
+    # ---- Email ----
+    email_match = re.search(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", text)
     email = email_match.group(0) if email_match else ""
 
-    # Contact (phone) - simple patterns for Indian + Intl numbers
-    contact_match = re.search(r"(\+?\d[\d\s\-]{7,}\d)", text)
-    contact = contact_match.group(0).strip() if contact_match else ""
+    # ---- Contact / Phone ----
+    phone_match = re.search(r"(\+?\d[\d\-\s]{8,}\d)", text)
+    contact = phone_match.group(0).strip() if phone_match else ""
 
-    # Skills (try to find line starting with skills keyword)
-    skills = ""
-    skills_match = re.search(r"(?i)skills\s*[:\-]?\s*(.*)", text)
-    if skills_match:
-        skills = skills_match.group(1).strip()
+    # ✅ IMPROVED LINKEDIN EXTRACTION
+    linkedin = ""
+    for line in lines:
+        if "linkedin" in line.lower():
+            url_match = re.search(r"(https?://[^\s]*linkedin\.com[^\s]*)", line, re.IGNORECASE)
+            if url_match:
+                linkedin = url_match.group(0)
+            else:
+                txt = line.split(":")[-1].strip()
+                if "linkedin" in txt.lower():
+                    linkedin = txt
+            break
 
-    # LinkedIn
-    linkedin_match = re.search(r"(https?://(www\.)?linkedin\.com/in/[a-zA-Z0-9\-_/]+)", text)
-    linkedin = linkedin_match.group(0) if linkedin_match else ""
-
-    # GitHub
-    github_match = re.search(r"(https?://(www\.)?github\.com/[a-zA-Z0-9\-_/]+)", text)
+    # ---- GitHub ----
+    github_match = re.search(r"(https?://[^\s]*github\.com[^\s]*)", text, re.IGNORECASE)
     github = github_match.group(0) if github_match else ""
 
-    # Achievements (look for keyword and capture lines after)
-    achievements = []
-    ach_match = re.search(r"(?i)achievements\s*[:\-]?\s*(.*)", text, re.DOTALL)
-    if ach_match:
-        ach_text = ach_match.group(1).strip()
-        # Split by new lines or semicolon or bullets
-        achievements = re.split(r"[\n;\u2022-]+", ach_text)
-        achievements = [a.strip() for a in achievements if a.strip()]
+    # ---- Skills ----
+    skills = ""
+    skills_pattern = re.compile(r"(skills|technical skills)\s*[:\-]?\s*(.*)", re.IGNORECASE)
+    for i, line in enumerate(lines):
+        m = skills_pattern.search(line)
+        if m:
+            if m.group(2).strip():
+                skills = m.group(2).strip()
+            else:
+                for nxt in lines[i+1:]:
+                    if nxt.strip():
+                        skills = nxt.strip()
+                        break
+            break
 
-    # Certifications (similar approach)
-    certifications = []
-    cert_match = re.search(r"(?i)certifications\s*[:\-]?\s*(.*)", text, re.DOTALL)
-    if cert_match:
-        cert_text = cert_match.group(1).strip()
-        certifications = re.split(r"[\n;\u2022-]+", cert_text)
-        certifications = [c.strip() for c in certifications if c.strip()]
-
-    # Education (basic capturing lines after Education keyword)
+    # ✅ EDUCATION EXTRACTION
     education = []
-    edu_match = re.search(r"(?i)education\s*[:\-]?\s*(.*)", text, re.DOTALL)
-    if edu_match:
-        edu_text = edu_match.group(1).strip()
-        # Split by new lines, then try to parse each line into degree, institution, details
-        edu_lines = edu_text.split('\n')
-        for line in edu_lines:
-            parts = line.split(',')
-            if len(parts) >= 2:
-                education.append({
-                    "degree": parts[0].strip(),
-                    "institution": parts[1].strip(),
-                    "details": ','.join(parts[2:]).strip() if len(parts) > 2 else ""
-                })
-            else:
-                # If no commas, just put whole line as degree and blank institution
-                education.append({
-                    "degree": line.strip(),
-                    "institution": "",
-                    "details": ""
-                })
+    edu_idx = None
 
-    # Projects (try similar capture after 'projects' keyword)
-    projects = []
-    proj_match = re.search(r"(?i)projects\s*[:\-]?\s*(.*)", text, re.DOTALL)
-    if proj_match:
-        proj_text = proj_match.group(1).strip()
-        proj_entries = re.split(r"[\n;\u2022-]+", proj_text)
-        # Just keep name-description pairs if possible: e.g. "Name: Description"
-        for entry in proj_entries:
-            if ':' in entry:
-                name, desc = entry.split(':', 1)
-                projects.append({"name": name.strip(), "description": desc.strip()})
-            else:
-                # If no colon, treat whole as project name only
-                projects.append({"name": entry.strip(), "description": ""})
+    for i, line in enumerate(lines):
+        if "education" in line.lower():
+            edu_idx = i
+            break
+
+    if edu_idx is not None:
+        for line in lines[edu_idx+1:]:
+            if line.isupper() and len(line.split()) < 5:
+                break
+
+            degree_match = re.search(r"(B\.?Tech|BTech|B\.?E\.?|M\.?Tech|Diploma|Bachelor|Master|Class\s?\d{2}).*", line, re.IGNORECASE)
+            cgpa_match = re.search(r"(CGPA|GPA)[^\d]*([\d\.]+)", line, re.IGNORECASE)
+            perc_match = re.search(r"(\d{2,3}\s?%)", line)
+            year_match = re.search(r"(20\d{2}[-–]\s?20\d{2}|20\d{2})", line)
+
+            if degree_match:
+                education.append({
+                    "degree": degree_match.group(0).strip(),
+                    "cgpa": cgpa_match.group(2) if cgpa_match else "",
+                    "percentage": perc_match.group(1) if perc_match else "",
+                    "year": year_match.group(0) if year_match else ""
+                })
 
     return {
         "name": name,
@@ -102,8 +111,8 @@ def extract_basic_info(text):
         "skills": skills,
         "linkedin": linkedin,
         "github": github,
-        "achievements": achievements,
-        "certifications": certifications,
         "education": education,
-        "projects": projects
+        "achievements": [],
+        "certifications": [],
+        "projects": [],
     }
